@@ -24,7 +24,7 @@ bool World::GetCamera(Camera& out) const {
     if (!pc) return false;
     const uintptr_t pcm = mem_.Read<uintptr_t>(pc + off::PlayerCameraManager);
     if (!pcm) return false;
-    const uintptr_t cache = pcm + off::CameraCache;
+    const uintptr_t cache = pcm + off::CameraCache + off::CameraPOV;
     out.location = mem_.Read<FVector>(cache + off::POVLocation);
     out.rotation = mem_.Read<FRotator>(cache + off::POVRotation);
     out.fov = mem_.Read<float>(cache + off::POVFOV);
@@ -36,7 +36,9 @@ bool World::GetLocalTeam(uint8_t& out) const {
     if (!pc) return false;
     const uintptr_t pawn = mem_.Read<uintptr_t>(pc + off::AcknowledgedPawn);
     if (!pawn) return false;
-    out = mem_.Read<uint8_t>(pawn + off::TeamIndex);
+    const uintptr_t ps = mem_.Read<uintptr_t>(pawn + off::PlayerState);
+    if (!ps) return false;
+    out = mem_.Read<uint8_t>(ps + off::TeamIndex);
     return true;
 }
 
@@ -44,13 +46,14 @@ FVector World::GetBone(uintptr_t actor, int boneId) const {
     FVector fallback{};
     const uintptr_t rootComp = mem_.Read<uintptr_t>(actor + off::RootComponent);
     if (rootComp) fallback = mem_.Read<FVector>(rootComp + off::RelativeLocation);
-    fallback.z += 80.0f; // approx head height if bone read fails
+    fallback.z += 80.0f;
     const uintptr_t mesh = mem_.Read<uintptr_t>(actor + off::Mesh);
     if (!mesh) return fallback;
-    const uintptr_t bones = mem_.Read<uintptr_t>(mesh + off::BoneArray);
-    if (!bones) return fallback;
-    FVector bone{};
-    if (!mem_.ReadBytes(bones + boneId * off::kBoneStride, &bone, sizeof(FVector))) return fallback;
+    const TArray bones = mem_.Read<TArray>(mesh + off::BoneArray);
+    if (!bones.data || bones.count <= boneId) return fallback;
+    FMatrix mat{};
+    if (!mem_.ReadBytes(bones.data + boneId * off::kBoneStride, &mat, sizeof(FMatrix))) return fallback;
+    FVector bone{mat.m[3][0], mat.m[3][1], mat.m[3][2]};
     if (bone.length() < 1.0f) return fallback;
     return bone;
 }
@@ -75,11 +78,15 @@ std::vector<Entity> World::GetEntities(const Camera& cam) const {
         e.actor = actor;
         e.root = mem_.Read<FVector>(rootComp + off::RelativeLocation);
         if (e.root.length() < 1.0f) continue;
-        e.health = mem_.Read<float>(actor + off::Health);
-        e.maxHealth = mem_.Read<float>(actor + off::MaxHealth);
-        e.team = mem_.Read<uint8_t>(actor + off::TeamIndex);
-        e.head = GetBone(actor, 68); // kHeadBone default; caller passes cfg
-        e.distance = (e.root - cam.location).length() / 100.0f; // cm -> m
+        const uintptr_t hs = mem_.Read<uintptr_t>(actor + off::HealthSet);
+        if (hs) {
+            e.health = mem_.Read<float>(hs + off::Health);
+            e.maxHealth = mem_.Read<float>(hs + off::MaxHealth);
+        }
+        const uintptr_t ps = mem_.Read<uintptr_t>(actor + off::PlayerState);
+        if (ps) e.team = mem_.Read<uint8_t>(ps + off::TeamIndex);
+        e.head = GetBone(actor, 68);
+        e.distance = (e.root - cam.location).length() / 100.0f;
         e.valid = true;
         out.push_back(e);
     }

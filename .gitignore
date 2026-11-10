@@ -1,4 +1,6 @@
-builds/
+build/*
+!build/.gitkeep
+build/intermediate/
 *.exe
 *.pdb
 *.ilk

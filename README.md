@@ -1,6 +1,6 @@
 # Fortnite External
 
-External process, RPM read-only, mouse via SendInput, offsets via Dumper-7.
+External process, RPM read-only, mouse via SendInput, offsets from your dump.
 
 ## Stack
 
@@ -12,21 +12,44 @@ External process, RPM read-only, mouse via SendInput, offsets via Dumper-7.
 ## Build
 
 Open `fortnite-external.vcxproj` in Visual Studio 2022, Release x64, Build.
-Output: `builds\fortnite-external.exe`
+Output: `build/fortnite-external.exe`
 
 ## Offsets
 
-Edit `src/offsets.h`. All values are `// FILL:` placeholders.
+`src/offsets.h` já vem com os valores da sua dump (xerozify.xyz/offsets).
+Values used:
 
-Regen recipe:
+| Symbol | Offset | Source |
+|---|---|---|
+| GWorld (UWORLD) | 0x1C8E1578 | Class |
+| gEngine | 0x1C8E2F48 | Class |
+| World::OwningGameInstance | 0x248 | World |
+| World::PersistentLevel | 0x40 | World |
+| GameInstance::LocalPlayers | 0x38 | GameInstance |
+| PlayerController::AcknowledgedPawn | 0x320 | PlayerController |
+| PlayerController::PlayerCameraManager | 0x330 | PlayerController |
+| PlayerCameraManager::CameraCachePrivate | 0x15A0 | PlayerCameraManager |
+| MinimalViewInfo::Location | 0x0 | MinimalViewInfo |
+| MinimalViewInfo::Rotation | 0x18 | MinimalViewInfo |
+| MinimalViewInfo::FOV | 0x30 | MinimalViewInfo |
+| Actor::RootComponent | 0x1B0 | Actor |
+| SceneComponent::RelativeLocation | 0x140 | SceneComponent |
+| Character::Mesh | 0x2F8 | Character |
+| FortPawn::HealthSet | 0x1430 | FortPawn |
+| FortHealthSet::Health | 0x48 | FortHealthSet |
+| FortHealthSet::MaxHealth | 0x70 | FortHealthSet |
+| Pawn::PlayerState | 0x298 | Pawn |
+| FortPlayerStateAthena::TeamIndex | 0xF81 | FortPlayerStateAthena |
+| SkeletalMeshComponent::CachedBoneSpaceTransforms | 0x9B8 | SkeletalMeshComponent |
+| FMatrix stride | 0x40 | Matrix |
 
-1. Run Dumper-7 against `FortniteClient-Win64-Shipping.exe`
-2. Paste `GWorld`, `GNames`, `OwningGameInstance`, `LocalPlayers`,
-   `PlayerController`, `AcknowledgedPawn`, `PlayerCameraManager`,
-   `RootComponent`, `Health`, `TeamIndex`, `Mesh`, `BoneArray`
-3. Rebuild
+Still FILL (verify via Cheat Engine / Dumper-7 on your build):
 
-Until offsets are filled the tool attaches but reads return 0.
+- `ULocalPlayer::PlayerController` — dump não tem, usado 0x30
+- `ULevel::Actors` — dump não tem, usado 0x0A0
+
+If the game reads nothing (attach ok, but 0 entities / 0 camera),
+regen these two offsets with Dumper-7 or Cheat Engine pointer scan.
 
 ## Config
 
