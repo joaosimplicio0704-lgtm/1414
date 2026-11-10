@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "fortnite-external (Run)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/fortnite-external.exe",
+      "args": [],
+      "stopOnEntry": false,
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "MIMode": "gdb",
+      "preLaunchTask": "build"
+    }
+  ]
+}

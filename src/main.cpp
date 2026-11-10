@@ -1,5 +1,6 @@
 #include <Windows.h>
 #include <cstdio>
+#include <cstring>
 #include "config.h"
 #include "memory.h"
 #include "entity.h"

@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "cmd",
+      "args": ["/c", "build.bat"],
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "shared", "clear": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "build (Release x64)",
+      "type": "shell",
+      "command": "cmd",
+      "args": ["/c", "\"%ProgramFiles(x86)%\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe\" fortnite-external.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64 /m /v:minimal"],
+      "group": { "kind": "build", "isDefault": false },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    }
+  ]
+}

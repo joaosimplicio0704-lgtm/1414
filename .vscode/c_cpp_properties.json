@@ -1,0 +1,26 @@
+{
+  "configurations": [
+    {
+      "name": "MSVC",
+      "includePath": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/dependencies"
+      ],
+      "define": [
+        "NDEBUG",
+        "_CONSOLE",
+        "_CRT_SECURE_NO_WARNINGS"
+      ],
+      "compiler": "cl.exe",
+      "cppStandard": "cpp17",
+      "cStandard": "c11",
+      "intelliSenseMode": "windows-x64-msvc",
+      "platform": "x64",
+      "browse": {
+        "symbolFilePath": "${workspaceFolder}/src/**/*.h",
+        "databaseFilePath": "${workspaceFolder}/.vscode/.cache/vscode-cpp-tools"
+      }
+    }
+  ],
+  "version": 4
+}

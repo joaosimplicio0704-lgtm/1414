@@ -1,4 +1,6 @@
 #include "overlay.h"
+#include <cstdio>
+#include <cstring>
 #include "config.h"
 
 static LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {

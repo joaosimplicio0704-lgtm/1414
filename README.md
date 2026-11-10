@@ -2,17 +2,46 @@
 
 External process, RPM read-only, mouse via SendInput, offsets from your dump.
 
-## Stack
+## Build via Visual Studio Code
 
-- C++17, MSVC v143, x64, Windows SDK 10.0
-- No injection, no writes to game memory
-- Overlay: transparent topmost Win32 (GDI), click-through when menu closed
-- Aim: screen-distance target pick, delta / smoothing per tick via SendInput
+### Pré-requisito (Windows)
 
-## Build
+1. Instale o **Visual Studio 2022** (ou **Build Tools 2022**) com a workload
+   **Desktop development with C++**. O `cl.exe` e `MSBuild.exe` vem com isso.
+2. Instale o extension **C/C++** da Microsoft no VS Code
+   (ext: `ms-vscode.cpptools`).
+3. Abra esta pasta no VS Code (`File > Open Folder...`).
 
-Open `fortnite-external.vcxproj` in Visual Studio 2022, Release x64, Build.
-Output: `build/fortnite-external.exe`
+### Build + Run (mais rápido)
+
+No VS Code, abra o terminal (`Ctrl+` `~`) e rode:
+
+```bat
+build.bat
+```
+
+O script procura o `MSBuild.exe`, builda Release x64 e roda o exe.
+A saída fica em `build\fortnite-external.exe`.
+
+### Build via task do VS Code
+
+1. `Ctrl+Shift+P` -> `Tasks: Run Build Task` (ou `Ctrl+Shift+B`).
+2. A task `build` executa `build.bat`.
+3. Depois, para rodar: `Ctrl+F5` (ou `Run and Debug` panel -> `Run` green button).
+
+### Build via command line (sem VS Code)
+
+```bat
+"C:\Program Files\Microsoft Visual Studio\2022\<EDITION>\MSBuild\Current\Bin\MSBuild.exe" fortnite-external.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64 /m
+```
+
+O `<EDITION>` é `Community`, `Professional`, `Enterprise` ou `BuildTools`.
+
+### Debug
+
+`Ctrl+F5` roda com o launch config em `.vscode/launch.json`.
+O exe abre em console integrado. Tem breakpoints por arrastação se quiser
+debugar o loop principal em `src/main.cpp`.
 
 ## Offsets
 
@@ -48,8 +77,8 @@ Still FILL (verify via Cheat Engine / Dumper-7 on your build):
 - `ULocalPlayer::PlayerController` — dump não tem, usado 0x30
 - `ULevel::Actors` — dump não tem, usado 0x0A0
 
-If the game reads nothing (attach ok, but 0 entities / 0 camera),
-regen these two offsets with Dumper-7 or Cheat Engine pointer scan.
+Se o jogo ler 0 de tudo (attach ok, mas 0 entities / 0 camera),
+regen essas duas offsets com Dumper-7 ou Cheat Engine pointer scan.
 
 ## Config
 
@@ -69,6 +98,8 @@ Edit `src/config.h` (`constexpr` block at top). Runtime menu:
 - `src/StealthyOpenProcess.h/.cpp` — user attachment (HWBP VEH, kernel32 callstack)
 - `src/closehandle.h/.cpp` — user attachment (unknown-exit handle cleanup, standalone)
 - `dependencies/XorStr.hpp` — minimal shim so StealthyOpenProcess compiles
+- `build.bat` — build script (searches MSBuild, builds Release x64, runs exe)
+- `.vscode/` — VS Code config (tasks, launch, IntelliSense)
 
 ## Notes
 
