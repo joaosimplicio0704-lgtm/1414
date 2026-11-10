@@ -1,0 +1,8 @@
+builds/
+*.exe
+*.pdb
+*.ilk
+*.exp
+*.lib
+config.json
+.vs/

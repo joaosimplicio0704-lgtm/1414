@@ -1,0 +1,87 @@
+#include "entity.h"
+#include "offsets.h"
+#include <cmath>
+
+static uintptr_t GetGameInstance(const Memory& m) {
+    const uintptr_t gworld = m.ModuleBase() + off::GWorld;
+    const uintptr_t world = m.Read<uintptr_t>(gworld);
+    if (!world) return 0;
+    return m.Read<uintptr_t>(world + off::OwningGameInstance);
+}
+
+static uintptr_t GetPlayerController(const Memory& m) {
+    const uintptr_t gi = GetGameInstance(m);
+    if (!gi) return 0;
+    const TArray players = m.Read<TArray>(gi + off::LocalPlayers);
+    if (!players.data || players.count <= 0) return 0;
+    const uintptr_t local = m.Read<uintptr_t>(players.data);
+    if (!local) return 0;
+    return m.Read<uintptr_t>(local + off::PlayerController);
+}
+
+bool World::GetCamera(Camera& out) const {
+    const uintptr_t pc = GetPlayerController(mem_);
+    if (!pc) return false;
+    const uintptr_t pcm = mem_.Read<uintptr_t>(pc + off::PlayerCameraManager);
+    if (!pcm) return false;
+    const uintptr_t cache = pcm + off::CameraCache;
+    out.location = mem_.Read<FVector>(cache + off::POVLocation);
+    out.rotation = mem_.Read<FRotator>(cache + off::POVRotation);
+    out.fov = mem_.Read<float>(cache + off::POVFOV);
+    return out.fov > 0.0f && out.fov < 180.0f;
+}
+
+bool World::GetLocalTeam(uint8_t& out) const {
+    const uintptr_t pc = GetPlayerController(mem_);
+    if (!pc) return false;
+    const uintptr_t pawn = mem_.Read<uintptr_t>(pc + off::AcknowledgedPawn);
+    if (!pawn) return false;
+    out = mem_.Read<uint8_t>(pawn + off::TeamIndex);
+    return true;
+}
+
+FVector World::GetBone(uintptr_t actor, int boneId) const {
+    FVector fallback{};
+    const uintptr_t rootComp = mem_.Read<uintptr_t>(actor + off::RootComponent);
+    if (rootComp) fallback = mem_.Read<FVector>(rootComp + off::RelativeLocation);
+    fallback.z += 80.0f; // approx head height if bone read fails
+    const uintptr_t mesh = mem_.Read<uintptr_t>(actor + off::Mesh);
+    if (!mesh) return fallback;
+    const uintptr_t bones = mem_.Read<uintptr_t>(mesh + off::BoneArray);
+    if (!bones) return fallback;
+    FVector bone{};
+    if (!mem_.ReadBytes(bones + boneId * off::kBoneStride, &bone, sizeof(FVector))) return fallback;
+    if (bone.length() < 1.0f) return fallback;
+    return bone;
+}
+
+std::vector<Entity> World::GetEntities(const Camera& cam) const {
+    std::vector<Entity> out;
+    const uintptr_t gworld = mem_.ModuleBase() + off::GWorld;
+    const uintptr_t world = mem_.Read<uintptr_t>(gworld);
+    if (!world) return out;
+    const uintptr_t level = mem_.Read<uintptr_t>(world + off::PersistentLevel);
+    if (!level) return out;
+    const TArray actors = mem_.Read<TArray>(level + off::Actors);
+    if (!actors.data || actors.count <= 0 || actors.count > 10000) return out;
+    uint8_t localTeam = 0;
+    GetLocalTeam(localTeam);
+    for (int32_t i = 0; i < actors.count; ++i) {
+        const uintptr_t actor = mem_.Read<uintptr_t>(actors.data + i * sizeof(uintptr_t));
+        if (!actor) continue;
+        const uintptr_t rootComp = mem_.Read<uintptr_t>(actor + off::RootComponent);
+        if (!rootComp) continue;
+        Entity e;
+        e.actor = actor;
+        e.root = mem_.Read<FVector>(rootComp + off::RelativeLocation);
+        if (e.root.length() < 1.0f) continue;
+        e.health = mem_.Read<float>(actor + off::Health);
+        e.maxHealth = mem_.Read<float>(actor + off::MaxHealth);
+        e.team = mem_.Read<uint8_t>(actor + off::TeamIndex);
+        e.head = GetBone(actor, 68); // kHeadBone default; caller passes cfg
+        e.distance = (e.root - cam.location).length() / 100.0f; // cm -> m
+        e.valid = true;
+        out.push_back(e);
+    }
+    return out;
+}
