@@ -24,7 +24,7 @@ if not defined MSBUILD (
 
 echo Using: !MSBUILD!
 echo.
-"!MSBUILD!" fortnite-external.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64 /m /v:minimal
+"!MSBUILD!" fortnite-external.sln /t:Build /p:Configuration=Release /p:Platform=x64 /m /v:minimal
 if %ERRORLEVEL% neq 0 (
     echo.
     echo [BUILD FAILED]
@@ -32,12 +32,15 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo.
-echo [BUILD OK] build\fortnite-external.exe
-if exist "build\fortnite-external.exe" (
-    "build\fortnite-external.exe"
-    echo.
-    echo [EXIT CODE %ERRORLEVEL%]
-) else (
-    echo [WARN] exe not found at expected path
-)
+echo [BUILD OK]
+echo   build\fortnite-external.dll  (injeta no Fortnite)
+echo   build\injector.exe          (injeta a DLL)
+echo.
+echo Como usar:
+echo   1. Abre o Fortnite.
+echo   2. Coloca o Fortnite em janela ^(não fullscreen^).
+echo   3. Roda:  build\injector.exe build\fortnite-external.dll FortniteClient-Win64-Shipping.exe
+echo   4. No jogo: INSERT menu | END sai | Segura RMB para aim.
+echo.
+echo [DONE]
 endlocal

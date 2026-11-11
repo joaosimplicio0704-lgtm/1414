@@ -2,14 +2,20 @@
 #include "offsets.h"
 #include <cmath>
 
-static uintptr_t GetGameInstance(const Memory& m) {
-    const uintptr_t gworld = m.ModuleBase() + off::GWorld;
-    const uintptr_t world = m.Read<uintptr_t>(gworld);
+static uintptr_t GetGameInstance(const InternalMemory& m) {
+    // GWorld is a global pointer in the fortnite-external module
+    // When injected, the module base is this DLL's base
+    // But GWorld offset is relative to the game's executable base
+    // We need to read the global variable directly since we're inside the process
+    // GWorld is exported by the game's engine module - we'll read it via the global
+    // The offset GWorld=0x1C8E1578 is an absolute address in the game's address space
+    // Since we're injected, we can read directly from that address
+    const uintptr_t world = m.Read<uintptr_t>(off::GWorld);
     if (!world) return 0;
     return m.Read<uintptr_t>(world + off::OwningGameInstance);
 }
 
-static uintptr_t GetPlayerController(const Memory& m) {
+static uintptr_t GetPlayerController(const InternalMemory& m) {
     // UE5 path: GameInstance -> LocalPlayers[0] -> ULocalPlayer
     // -> ViewportClient -> UGameViewportClient -> World
     // -> GameState -> PlayerArray[0] -> APlayerState
@@ -76,8 +82,9 @@ FVector World::GetBone(uintptr_t actor, int boneId) const {
 
 std::vector<Entity> World::GetEntities(const Camera& cam) const {
     std::vector<Entity> out;
-    const uintptr_t gworld = mem_.ModuleBase() + off::GWorld;
-    const uintptr_t world = mem_.Read<uintptr_t>(gworld);
+    // GWorld is an absolute address in the game's address space
+    // Since we're injected into the game process, we read directly from it
+    const uintptr_t world = mem_.Read<uintptr_t>(off::GWorld);
     if (!world) return out;
     // UE5: actors live in Level::ActorCluster (FLevelActorContainer)
     // not ULevel::Actors (doesn't exist in UE5).

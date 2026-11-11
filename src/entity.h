@@ -1,7 +1,7 @@
 #pragma once
 // Unreal entity walk: GWorld -> OwningGameInstance -> LocalPlayers ->
 // PlayerController -> AcknowledgedPawn / PlayerCameraManager, Level -> Actors.
-#include "memory.h"
+#include "internal.h"
 #include "sdk.h"
 #include <vector>
 
@@ -23,12 +23,12 @@ struct Entity {
 
 class World {
 public:
-    explicit World(const Memory& mem) : mem_(mem) {}
+    explicit World(const InternalMemory& mem) : mem_(mem) {}
     bool GetCamera(Camera& out) const;
     bool GetLocalTeam(uint8_t& out) const;
     std::vector<Entity> GetEntities(const Camera& cam) const;
     FVector GetBone(uintptr_t actor, int boneId) const;
 
 private:
-    const Memory& mem_;
+    const InternalMemory& mem_;
 };
