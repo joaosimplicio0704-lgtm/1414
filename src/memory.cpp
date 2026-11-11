@@ -11,7 +11,13 @@ static DWORD FindPid(const char* name) {
         do {
             char exe[MAX_PATH]{};
             WideCharToMultiByte(CP_UTF8, 0, pe.szExeFile, -1, exe, sizeof(exe), nullptr, nullptr);
-            if (_stricmp(exe, name) == 0) { pid = pe.th32ProcessID; break; }
+            // szExeFile = caminho completo; name = só o filename.
+            // Extrai só o filename antes de comparar.
+            const char* file = exe;
+            for (const char* p = exe; *p; ++p) {
+                if (*p == '\\' || *p == '/') file = p + 1;
+            }
+            if (_stricmp(file, name) == 0) { pid = pe.th32ProcessID; break; }
         } while (Process32NextW(snap, &pe));
     }
     CloseHandle(snap);
